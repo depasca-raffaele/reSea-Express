@@ -1,5 +1,6 @@
 import express from 'express';
-import sampleRouter from './routers/sampleRouter.js';
+import orderRouter from './routers/orders-router.js';
+import productRouter from './routers/products-router.js';
 
 const app = express();
 
@@ -9,7 +10,17 @@ const host = process.env.HOST || 'localhost';
 app.use(express.json());
 app.use(express.static('public'));
 
-app.use('/', sampleRouter);
+app.use('/orders', orderRouter);
+
+app.use('/products', productRouter)
+
+app.use((request, response, next) => {
+
+    response.status(404).json({
+        error: "Resource not found",
+        message: "The requested endpoint does not exist on the server"
+    });
+});
 
 app.listen(port, (error) => {
     if (error) {
