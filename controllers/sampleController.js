@@ -1,4 +1,4 @@
-import connection from "../db/connections/connection.js";
+import connection from "../database/connection.js";
 
 async function index(request, response) {
     try {
@@ -57,7 +57,7 @@ async function create(request, response) {
         return response.status(201).json({
             error: null,
             message: 'Creato con successo',
-            data: { id: risultato.insertId } 
+            data: { id: risultato.insertId }
         });
 
     } catch (error) {
@@ -73,8 +73,8 @@ async function create(request, response) {
 
 async function modify(request, response) {
     try {
-        const {} = request.params; // per l'id
-        const {} = request.body;   // corpo modifica
+        const { } = request.params; // per l'id
+        const { } = request.body;   // corpo modifica
 
         const query = ``;
 
@@ -98,7 +98,7 @@ async function modify(request, response) {
 
 async function destroy(request, response) {
     try {
-        const {} = request.params;
+        const { } = request.params;
 
         const querySql = ``;
 

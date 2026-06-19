@@ -1,6 +1,6 @@
 import express from "express";
 
-import { index, show, create, modify, destroy } from '../controllers/samplesController.js';
+import { index, show, create, modify, destroy } from '../controllers/sampleController.js';
 
 const sampleRouter = express.Router();
 
