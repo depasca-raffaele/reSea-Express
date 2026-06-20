@@ -26,7 +26,7 @@ async function index(request, response) {
         // baseURL='http://localhost:3000'    
         const baseUrl = `${request.protocol}://${request.get('host')}`;
 
-        // Utilizzo .map() per creare un nuovo array trasformando ogni singolo oggetto 'product' e passando ogni singolo oggetto alla funzione
+        // Utilizzo .map() per creare un nuovo array per poter trasformare ogni singolo oggetto 'product' e lo passo alla funzione,
         // insieme alla base recuperata in precedenza, il resto lo troverete in utils\utils.js
         const productsFormatted = rows.map(product => formatProduct(product, baseUrl));
 
