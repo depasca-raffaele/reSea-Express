@@ -20,3 +20,5 @@ function formatProduct(product, baseUrl) {
         image: `${baseUrl}/assets/${imageFileName}`
     };
 }
+
+export { formatProduct }
