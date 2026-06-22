@@ -1,7 +1,26 @@
 function validateProductsQuery(request, response, next) {
     const { search, category, minPrice, maxPrice, limit, sortBy } = request.query;
     const allowedSort = ["recent", "price_asc", "price_desc"];
+    const allowedParams = ["search", "category", "minPrice", "maxPrice", "limit", "sortBy"];
 
+    //whitelist query params
+    const unknownParams = Object.keys(request.query).filter(
+        (key) => !allowedParams.includes(key)
+    );
+
+    if (unknownParams.length > 0) {
+        return response.status(400).json({
+            error: "Richiesta non valida",
+            message: "Paramentri di query non supportati",
+            details: {
+                unknown: unknownParams,
+                allowed: allowedParams
+            }
+        });
+    }
+
+
+    //validazione dei valori
     if (sortBy !== undefined && !allowedSort.includes(sortBy)) {
         return response.status(400).json({
             error: "Richiesta non valida",

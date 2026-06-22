@@ -32,31 +32,51 @@ function validateCreationOrder(request, response, next) {
         phone_number
     } = request.body;
 
-    if (
-        email_client == null ||
-        shipping_address == null ||
-        billing_address == null ||
-        total_amount == null ||
-        order_date == null ||
-        client_name == null ||
-        phone_number == null
-    ) {
+    const errors = [];
+
+    //controllo campi obbligatori
+    if (email_client == null) {
+        errors.push({ field: "email_client", message: "Campo obbligatorio" });
+    }
+    if (shipping_address == null) {
+        errors.push({ field: "shipping_address", message: "Campo obbligatorio" });
+    }
+    if (billing_address == null) {
+        errors.push({ field: "billing_address", message: "Campo obbligatorio" });
+    }
+    if (total_amount == null) {
+        errors.push({ field: "total_amount", message: "Campo obbligatorio" });
+    }
+    if (order_date == null) {
+        errors.push({ field: "order_date", message: "Campo obbligatorio" });
+    }
+    if (client_name == null) {
+        errors.push({ field: "client_name", message: "Campo obbligatorio" });
+    }
+    if (phone_number == null) {
+        errors.push({ field: "phone_number", message: "Campo obbligatorio" });
+    }
+
+    // se mancano campi obbligatori, restituisce i vari errori
+    if (errors.length > 0) {
         return response.status(400).json({
-            error: "Richiesta non valida",
-            message: "Tutti i campi sono obbligatori."
+            error: "Campi obbligatori mancanti",
+            errors: errors
         });
     }
 
-    if (
-        typeof email_client !== "string" ||
-        typeof shipping_address !== "string" ||
-        typeof billing_address !== "string" ||
-        typeof client_name !== "string"
-    ) {
-        return response.status(400).json({
-            error: "Input non valido",
-            message: "Tipi di dato non validi."
-        });
+    //controllo sui tipi di dato
+    if (typeof email_client !== "string") {
+        errors.push({ field: "email_client", message: "Deve essere una stringa" });
+    }
+    if (typeof shipping_address !== "string") {
+        errors.push({ field: "shipping_address", message: "Deve essere una stringa" });
+    }
+    if (typeof billing_address !== "string") {
+        errors.push({ field: "billing_address", message: "Deve essere una stringa" });
+    }
+    if (typeof client_name !== "string") {
+        errors.push({ field: "client_name", message: "Deve essere una stringa" });
     }
 
     const email = email_client.trim();
@@ -65,68 +85,85 @@ function validateCreationOrder(request, response, next) {
     const name = client_name.trim();
     const phone = String(phone_number).trim();
 
-    if (!email || !shipping || !billing || !name || !phone) {
-        return response.status(400).json({
-            error: "Richiesta non valida",
-            message: "Tutti i campi sono obbligatori."
-        });
+
+    if (!email) {
+        errors.push({ field: "email_client", message: "Non può essere vuoto" });
+    }
+    if (!shipping) {
+        errors.push({ field: "shipping_address", message: "Non può essere vuoto" });
+    }
+    if (!billing) {
+        errors.push({ field: "billing_address", message: "Non può essere vuoto" });
+    }
+    if (!name) {
+        errors.push({ field: "client_name", message: "Non può essere vuoto" });
+    }
+    if (!phone) {
+        errors.push({ field: "phone_number", message: "Non può essere vuoto" });
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        return response.status(400).json({
-            error: "Input non valido",
-            message: "L'indirizzo email non è valido."
-        });
+    // Validazione email
+    if (email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            errors.push({ field: "email_client", message: "Email non valida" });
+        }
     }
 
-    if (shipping.length < 8 || shipping.length > 150 || billing.length < 8 || billing.length > 150) {
-        return response.status(400).json({
-            error: "Input non valido",
-            message: "Gli indirizzi devono avere una lunghezza compresa tra 8 e 150 caratteri."
-        });
+    // Validazione indirizzi
+    if (shipping && (shipping.length < 8 || shipping.length > 150)) {
+        errors.push({ field: "shipping_address", message: "Deve essere tra 8 e 150 caratteri" });
+    }
+    if (billing && (billing.length < 8 || billing.length > 150)) {
+        errors.push({ field: "billing_address", message: "Deve essere tra 8 e 150 caratteri" });
     }
 
-    if (name.length < 2 || name.length > 100) {
-        return response.status(400).json({
-            error: "Input non valido",
-            message: "Il nome cliente deve avere una lunghezza compresa tra 2 e 100 caratteri."
-        });
+    // Validazione nome
+    if (name && (name.length < 2 || name.length > 100)) {
+        errors.push({ field: "client_name", message: "Deve essere tra 2 e 100 caratteri" });
     }
 
+    // Validazione importo
     const amount = Number(total_amount);
     if (Number.isNaN(amount) || amount <= 0) {
-        return response.status(400).json({
-            error: "Input non valido",
-            message: "L'importo totale deve essere un numero maggiore di zero."
-        });
+        errors.push({ field: "total_amount", message: "Deve essere un numero maggiore di zero" });
     }
 
-    const phoneRegex = /^\d{7,15}$/;
-    if (!phoneRegex.test(phone)) {
-        return response.status(400).json({
-            error: "Input non valido",
-            message: "Il numero di telefono deve contenere solo cifre (7-15)."
-        });
+    // Validazione telefono
+    if (phone) {
+        const phoneRegex = /^\d{7,15}$/;
+        if (!phoneRegex.test(phone)) {
+            errors.push({ field: "phone_number", message: "Deve contenere 7-15 cifre" });
+        }
     }
 
+    // Validazione data
     const normalizedOrderDate = normalizeOrderDate(order_date);
     if (!normalizedOrderDate) {
+        errors.push({ field: "order_date", message: "Data non valida (formato: YYYY-MM-DD o YYYY-MM-DD HH:MM:SS)" });
+    }
+
+    // Se ci sono errori, restituiscili tutti
+    if (errors.length > 0) {
         return response.status(400).json({
-            error: "Input non valido",
-            message: "La data ordine non è valida."
+            error: "Validazione fallita",
+            errors: errors
         });
     }
 
+    // Normalizzazione dei dati
     request.body.email_client = email;
     request.body.shipping_address = shipping;
     request.body.billing_address = billing;
     request.body.client_name = name;
     request.body.phone_number = phone;
     request.body.total_amount = amount;
-    request.body.order_date = parsedDate.toISOString().slice(0, 19).replace("T", " ");
+    request.body.order_date = normalizedOrderDate;
 
     next();
+
+
+
 }
 
 export default validateCreationOrder;
