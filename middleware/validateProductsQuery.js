@@ -81,6 +81,7 @@ function validateProductsQuery(request, response, next) {
                 message: "limit deve essere un intero tra 1 e 100"
             });
         }
+        request.validatedLimit = parsedLimit;
     }
 
     next();

@@ -169,4 +169,51 @@ async function show(request, response) {
 
 }
 
-export { index, show };
+async function getBestSellers(request, response) {
+    try {
+
+        const limit = request.validatedLimit || 4;
+
+        const querySql = `
+            SELECT 
+                p.id, 
+                p.name, 
+                p.slug, 
+                p.price, 
+                p.image,
+                SUM(op.quantity) AS total_sold
+            FROM products p
+            JOIN order_product op 
+                ON p.id = op.product_id
+            GROUP BY p.id
+            ORDER BY total_sold DESC
+            LIMIT ?
+        `;
+
+        const [rows] = await connection.query(querySql, [limit]);
+
+        if (rows.length === 0) {
+            return response.status(200).json({
+                error: null,
+                data: [],
+                message: "Nessun prodotto venduto al momento."
+            });
+        }
+
+        const baseUrl = `${request.protocol}://${request.get("host")}`;
+        const productsFormatted = rows.map(product => formatProduct(product, baseUrl));
+
+        return response.status(200).json({
+            error: null,
+            data: productsFormatted
+        });
+    } catch (error) {
+
+        return response.status(500).json({
+            error: "Errore interno del server",
+            message: "Errore durante il recupero dei best seller"
+        });
+    }
+}
+
+export { index, show, getBestSellers };
