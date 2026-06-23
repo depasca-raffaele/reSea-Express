@@ -5,19 +5,11 @@ import { formatProduct } from "../utils/utils.js";
 async function index(request, response) {
     try {
         const { search, category, minPrice, maxPrice, sortBy, limit } = request.query;
+        const limit = request.validatedLimit || 12;
+        const page = request.validatedPage || 1;
+        const offset = (page - 1) * limit;
 
-        let querySql = `
-            SELECT DISTINCT
-                p.id,
-                p.name,
-                p.slug,
-                p.description,
-                p.price,
-                p.create_date,
-                p.plastic_offset_kg,
-                p.image
-            FROM products p
-        `;
+        let fromSql = `FROM products p`;
 
         const params = [];
         const conditions = ["1 = 1"];
@@ -51,42 +43,67 @@ async function index(request, response) {
             }
         }
 
-        querySql += ` WHERE ${conditions.join(" AND ")}`;
+        const whereSql = ` WHERE ${conditions.join(" AND ")}`;
 
+        let orderSql = "ORDER BY p.id DESC";
         if (sortBy === "recent") {
-            querySql += " ORDER BY p.create_date DESC";
+            orderSql = "ORDER BY p.create_date DESC";
         } else if (sortBy === "price_asc") {
-            querySql += " ORDER BY p.price ASC";
+            orderSql = "ORDER BY p.price ASC";
         } else if (sortBy === "price_desc") {
-            querySql += " ORDER BY p.price DESC";
-        } else {
-            querySql += " ORDER BY p.id DESC";
+            orderSql = "ORDER BY p.price DESC";
         }
 
-        if (limit !== undefined) {
-            const parsedLimit = Number(limit);
-            if (Number.isInteger(parsedLimit) && parsedLimit > 0) {
-                querySql += " LIMIT " + parsedLimit;
-            }
-        }
+        const countSql = `
+            SELECT COUNT(DISTINCT p.id) AS total
+            ${fromSql}
+            ${whereSql}
+        `;
 
-        const [rows] = await connection.execute(querySql, params);
+        const [countRows] = await connection.execute(countSql, params);
+        const total = countRows[0]?.total ?? 0;
+
+        const totalPages = Math.max(1, Math.ceil(total / limit));
+
+        const querySql = `
+            SELECT DISTINCT
+                p.id,
+                p.name,
+                p.slug,
+                p.description,
+                p.price,
+                p.create_date,
+                p.plastic_offset_kg,
+                p.image
+            ${fromSql}
+            ${whereSql}
+            ${orderSql}
+            LIMIT ? OFFSET ?
+        `;
+
+        const [rows] = await connection.execute(querySql, [...params, limit, offset]);
 
         // per creare un percorso assoluto verso le immagini nel backend
         // request.protocol intercetta automaticamente "http" o "https" a seconda dalla chiamata che arriva al database
         // request.get('host') intercetta invece l'host che nel nostro caso è "localhost:3000" quindi alla fine ci ritroveremo con 
-        // baseURL='http://localhost:3000'    
-        const baseUrl = `${request.protocol}://${request.get('host')}`;
+        // baseURL='http://localhost:3000'  
+        const baseURL = `${request.protocol}://${request.get("host")}`;
 
         // Utilizzo .map() per creare un nuovo array per poter trasformare ogni singolo oggetto 'product' e lo passo alla funzione,
         // insieme alla base recuperata in precedenza, il resto lo troverete in utils\utils.js
-        const productsFormatted = rows.map(product => formatProduct(product, baseUrl));
+        const productsFormatted = rows.map(product => formatProduct(product, baseURL));
 
         return response.status(200).json({
             error: null,
-            data: productsFormatted
+            data: productsFormatted,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages
+            }
+        });
 
-        })
 
     } catch (error) {
         console.error(error);

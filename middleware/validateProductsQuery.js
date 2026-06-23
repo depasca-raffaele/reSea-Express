@@ -84,6 +84,17 @@ function validateProductsQuery(request, response, next) {
         request.validatedLimit = parsedLimit;
     }
 
+    if(page !== undefined) {
+        const parsedPage = Number(page);
+        if(!Number.isInteger(parsedPage) || parsedPage <= 0 || parsedPage > 1000) {
+            return response.status(400).json({
+                error: "Richiesta non valida",
+                message: "page deve essere un intero maggiore di 0"
+            })
+        }
+        request.validatedPage = parsedPage;
+    }
+
     next();
 }
 
