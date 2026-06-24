@@ -182,7 +182,7 @@ async function create(request, response) {
             const emailBody = await generateEmailHtml('orderConfirmation', emailData);
             await sendMail({
                 to: email_client,
-                subject: `Conferma ordine reSea #${orderId}`,
+                subject: `Conferma ordine reSea #ORD-2026-${orderId}`,
                 body: emailBody
             });
 
