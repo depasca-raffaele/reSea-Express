@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+    <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px;">
+        <h2 style="color: #0077b6;">🔔 Nuovo Ordine: #ORD-2026-{{orderId}}</h2>
+
+        <p><strong>Cliente:</strong> {{client_name}}</p>
+        <p><strong>Telefono:</strong> {{phone_number}}</p>
+        <p><strong>Indirizzo:</strong> {{shipping_address}}</p>
+
+        <h3>Prodotti ordinati:</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: #f4f4f4;">
+                    <th style="padding: 8px; text-align: left;">Prodotto</th>
+                    <th style="padding: 8px; text-align: left;">Qtà</th>
+                    <th style="padding: 8px; text-align: left;">Prezzo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each items}}
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{{this.name}}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{{this.quantity}}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">{{this.unitPrice}} €</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+
+        <p style="font-size: 1.2em; font-weight: bold; margin-top: 20px;">Totale: €{{totalAmount}}</p>
+    </div>
+</body>
+
+</html>

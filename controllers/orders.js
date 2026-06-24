@@ -185,8 +185,27 @@ async function create(request, response) {
                 subject: `Conferma ordine reSea #${orderId}`,
                 body: emailBody
             });
+
+            const adminEmailData = {
+                ...emailData,
+                shipping_address,
+                phone_number,
+                items: processedItems
+            };
+
+            const adminEmailBody = await generateEmailHtml('adminNotification', adminEmailData);
+
+            const adminEmail = process.env.ADMIN_EMAIL;
+
+            await sendMail({
+                to: adminEmail,
+                subject: `🔔 NUOVO ORDINE: #ORD-2026-${orderId}`,
+                body: adminEmailBody
+            });
+
         } catch (emailError) {
-            console.error("L'ordine è stato creato, ma l'invio dell'email è fallito:", emailError);
+
+            console.error("Errore nell'invio delle email:", emailError);
         }
 
         return response.status(201).json({
