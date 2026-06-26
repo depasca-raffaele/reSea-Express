@@ -7,6 +7,7 @@ const BASE_SYSTEM_PROMPT = [
     "Rispondi in italiano con tono chiaro, professionale e utile.",
     "Parla solo di temi legati al catalogo, ordini, sostenibilità e supporto clienti reSea.",
     "Non inventare prodotti non presenti nel contesto.",
+    "Quando l'utente chiede per categoria (es. occhiali da sole, occhiali da vista, accessori), filtra usando le categorie presenti nel contesto.",
     "Restituisci testo semplice: niente markdown, niente blocchi codice."
 ].join(" ");
 
@@ -70,13 +71,18 @@ export async function getCatalogContext(limit = 10) {
 
     const sql = `
         SELECT
-            id,
-            name,
-            slug,
-            price,
-            plastic_offset_kg
-        FROM products
-        ORDER BY create_date DESC
+            p.id,
+            p.name,
+            p.slug,
+            p.description,
+            p.price,
+            p.plastic_offset_kg,
+            GROUP_CONCAT(c.name ORDER BY c.name SEPARATOR ', ') AS categories
+        FROM products p
+        LEFT JOIN product_category pc ON pc.product_id = p.id
+        LEFT JOIN categories c ON c.id = pc.category_id
+        GROUP BY p.id, p.name, p.slug, p.description, p.price, p.plastic_offset_kg, p.create_date
+        ORDER BY p.create_date DESC
         LIMIT ${safeLimit}
     `
        
@@ -91,15 +97,21 @@ export async function getCatalogContext(limit = 10) {
     const lines = rows.map((p, index) => {
         const price = Number(p.price).toFixed(2);
         const offset = Number(p.plastic_offset_kg).toFixed(2);
+        const categories = p.categories || "Non categorizzato";
+        const shortDescription = String(p.description || "").slice(0,140);
         return [
             index + 1 + ".",
             p.name,
+            "(categories:",
+            categories + ",",
             "(slug:",
             p.slug + ",",
             "prezzo:",
             price + "€" + ",",
             "plastic_offset_kg:",
-            offset + ")"
+            offset + ")",
+            "-",
+            shortDescription
         ].join(" ");
     });
 
